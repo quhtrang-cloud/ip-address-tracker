@@ -1,5 +1,10 @@
+
 import { useEffect } from 'react';
+import { Icon } from 'leaflet';
 import { CircleMarker, MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
 
 interface LocationMapProps {
@@ -9,14 +14,20 @@ interface LocationMapProps {
   region: string;
 }
 
-interface MapViewProps {
-  position: [number, number];
-}
+const locationIcon = new Icon({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
 
-function MapView({ position }: MapViewProps) {
+function MapView({ position }: { position: [number, number] }) {
   const map = useMap();
 
-  // Update the map when the searched location changes
+  // Recenter the map when a new IP is selected
   useEffect(() => {
     map.setView(position, map.getZoom());
   }, [map, position[0], position[1]]);
@@ -26,7 +37,7 @@ function MapView({ position }: MapViewProps) {
 
 function LocationMap({ latitude, longitude, city, region }: LocationMapProps) {
   const position: [number, number] = [latitude, longitude];
-  const locationLabel = [city, region].filter(Boolean).join(', ') || 'Unknown location';
+  const place = [city, region].filter(Boolean).join(', ') || 'Unknown location';
 
   return (
     <section className="location-map" aria-label="IP location map">
@@ -51,11 +62,11 @@ function LocationMap({ latitude, longitude, city, region }: LocationMapProps) {
             opacity: 0.35,
             fillColor: '#2855c5',
             fillOpacity: 0.12,
-            interactive: false,
+            interactive: false
           }}
         />
-        <Marker position={position}>
-          <Popup>Approximate location: {locationLabel}</Popup>
+        <Marker position={position} icon={locationIcon}>
+          <Popup>Approximate location: {place}</Popup>
         </Marker>
       </MapContainer>
     </section>
