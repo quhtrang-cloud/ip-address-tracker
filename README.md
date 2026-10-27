@@ -1,32 +1,38 @@
-# React + TypeScript + Vite
+# IP Address Tracker
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A responsive IP address tracker built with React, TypeScript, and Leaflet. The application is designed to display IP geolocation information through an interactive map and a clean, accessible interface.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React
+- TypeScript
+- Vite
+- React Leaflet
+- CSS
 
-## React Compiler
+## Current Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Responsive layout with light and dark modes
+- Interactive map with location marker and highlight
+- IP summary and location details
+- Copy IP address functionality
+- Basic search input validation
 
-## Expanding the Oxlint configuration
+## Getting Started
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+git clone https://github.com/quhtrang-cloud/ip-address-tracker.git
+cd ip-address-tracker
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Project Status
+
+**In development.**
+
+IP geolocation results currently use demo data. API integration, dynamic search results, and recent search history are planned.
+
+## Credits
+
+Based on the IP Address Tracker challenge from [Frontend Mentor](https://www.frontendmentor.io/).
