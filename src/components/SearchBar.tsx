@@ -1,29 +1,41 @@
 
 import { useState } from 'react';
 import type { SubmitEvent } from 'react';
+import { validateIpQuery } from '../utils/validation';
 
-function SearchBar() {
+interface SearchBarProps {
+  onSearch: (query: string) => void;
+  isLoading?: boolean;
+}
+
+function SearchBar({ onSearch, isLoading = false }: SearchBarProps) {
   // Store search input and validation errors
   const [query, setQuery] = useState('8.8.8.8');
   const [error, setError] = useState('');
 
-  // Handle search submission
+  // Validate the query before submitting
   function handleSearch(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const value = query.trim();
+    const validationError = validateIpQuery(value);
 
-    if (!value) {
-      setError('Please enter an IP address or domain.');
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
     setError('');
-    console.log('Searching for:', value);
+    onSearch(value);
+  }
+
+  function selectExample(value: string) {
+    setQuery(value);
+    setError('');
   }
 
   return (
     <div className="search-panel">
-      <form className="search-form" onSubmit={handleSearch}>
+      <form className="search-form" onSubmit={handleSearch} aria-busy={isLoading}>
         <label htmlFor="ip-search" className="sr-only">
           IP address or domain
         </label>
@@ -51,8 +63,11 @@ function SearchBar() {
           placeholder="Enter an IP address or domain"
           aria-invalid={Boolean(error)}
           aria-describedby={error ? 'search-error' : undefined}
+          disabled={isLoading}
         />
-        <button type="submit">Search →</button>
+        <button type="submit" disabled={isLoading}>
+          {isLoading ? 'Searching...' : 'Search →'}
+        </button>
       </form>
 
       {error && (
@@ -63,13 +78,13 @@ function SearchBar() {
 
       <div className="search-examples">
         <span>Try an example:</span>
-        <button type="button" onClick={() => setQuery('8.8.8.8')}>
+        <button type="button" onClick={() => selectExample('8.8.8.8')} disabled={isLoading}>
           8.8.8.8
         </button>
-        <button type="button" onClick={() => setQuery('1.1.1.1')}>
+        <button type="button" onClick={() => selectExample('1.1.1.1')} disabled={isLoading}>
           1.1.1.1
         </button>
-        <button type="button" onClick={() => setQuery('google.com')}>
+        <button type="button" onClick={() => selectExample('google.com')} disabled={isLoading}>
           google.com
         </button>
       </div>

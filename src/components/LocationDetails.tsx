@@ -1,3 +1,4 @@
+
 interface LocationDetailsProps {
   city: string;
   region: string;
@@ -5,6 +6,37 @@ interface LocationDetailsProps {
   longitude: number;
   timezone: string;
   postalCode?: string;
+}
+
+function formatLocalTime(timezone: string): string {
+  try {
+    const match = /^([+-])(\d{2}):(\d{2})$/.exec(timezone);
+    const options: Intl.DateTimeFormatOptions = {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    };
+
+    if (match) {
+      const hours = Number(match[2]);
+      const minutes = Number(match[3]);
+      if (hours > 23 || minutes > 59) return 'Not available';
+
+      const offsetMinutes = (hours * 60 + minutes) * (match[1] === '-' ? -1 : 1);
+      const localDate = new Date(Date.now() + offsetMinutes * 60_000);
+
+      return new Intl.DateTimeFormat('en-GB', {
+        ...options,
+        timeZone: 'UTC'
+      }).format(localDate);
+    }
+
+    return new Intl.DateTimeFormat('en-GB', {
+      ...options,
+      timeZone: timezone
+    }).format(new Date());
+  } catch {
+    return 'Not available';
+  }
 }
 
 function LocationDetails({
@@ -19,18 +51,9 @@ function LocationDetails({
   const formattedLatitude = `${Math.abs(latitude).toFixed(4)}° ${latitude >= 0 ? 'N' : 'S'}`;
   const formattedLongitude = `${Math.abs(longitude).toFixed(4)}° ${longitude >= 0 ? 'E' : 'W'}`;
 
-  // Calculate local time from the location's timezone
-  const localTime = (() => {
-    try {
-      return new Intl.DateTimeFormat('en-GB', {
-        timeZone: timezone,
-        dateStyle: 'medium',
-        timeStyle: 'short'
-      }).format(new Date());
-    } catch {
-      return 'Not available';
-    }
-  })();
+  // Calculate local time using an offset or an IANA timezone
+  const localTime = formatLocalTime(timezone);
+  const place = [city, region].filter(Boolean).join(', ') || 'Unknown location';
 
   const details = [
     { label: 'Latitude', value: formattedLatitude },
@@ -42,7 +65,7 @@ function LocationDetails({
   return (
     <section className="location-details" aria-labelledby="location-details-title">
       <h2 id="location-details-title">Location Details</h2>
-      <p className="location-details-place">{city}, {region}</p>
+      <p className="location-details-place">{place}</p>
       <dl className="location-details-list">
         {details.map((item) => (
           <div className="location-details-row" key={item.label}>
