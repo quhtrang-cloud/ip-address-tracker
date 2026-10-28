@@ -1,4 +1,3 @@
-
 import process from 'node:process';
 import { isIP } from 'node:net';
 
@@ -44,10 +43,7 @@ export default {
 
     const endpoint = new URL('https://geo.ipify.org/api/v2/country,city');
     endpoint.searchParams.set('apiKey', apiKey);
-    endpoint.searchParams.set(
-      ipVersion ? 'ipAddress' : 'domain',
-      query
-    );
+    endpoint.searchParams.set(ipVersion ? 'ipAddress' : 'domain', query);
 
     try {
       const response = await fetch(endpoint, {
@@ -55,6 +51,9 @@ export default {
       });
 
       if (!response.ok) {
+        // Log only the upstream status, never the API key or request URL
+        console.error('GeoIPify request failed:', response.status);
+
         return Response.json(
           { error: 'Unable to retrieve location data.' },
           { status: 502 }
@@ -66,7 +65,10 @@ export default {
       return Response.json(data, {
         headers: { 'Cache-Control': 'no-store' }
       });
-    } catch {
+    } catch (error) {
+      console.error('GeoIPify request failed before receiving a response:',
+        error instanceof Error ? error.name : 'Unknown error');
+
       return Response.json(
         { error: 'The lookup service is temporarily unavailable.' },
         { status: 502 }
