@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="440" viewBox="0 0 900 440" fill="none" aria-hidden="true">
+  <defs>
+    <pattern id="dots" width="9" height="9" patternUnits="userSpaceOnUse">
+      <circle cx="4.5" cy="4.5" r="1.65" fill="#2855c5"/>
+    </pattern>
+  </defs>
+  <!-- Stylised continental silhouettes; decorative only -->
+  <g fill="url(#dots)" opacity=".62">
+    <path d="M86 102 121 68 192 55 222 79 277 77 287 109 262 134 236 139 224 165 188 172 176 203 153 212 144 174 124 154 95 147 74 122Z"/>
+    <path d="M218 208 253 211 289 245 297 294 277 340 261 376 240 371 235 335 211 303 205 261Z"/>
+    <path d="M381 92 411 79 443 88 464 72 511 79 528 101 570 89 614 76 669 92 735 101 770 128 756 163 701 171 686 191 657 184 636 215 609 227 582 194 555 191 523 166 491 169 473 139 448 141 427 118 400 125Z"/>
+    <path d="M448 169 496 174 545 209 559 260 532 307 502 345 473 333 454 294 448 254 420 207Z"/>
+    <path d="M708 281 739 274 776 288 804 309 799 341 763 347 732 334 701 310Z"/>
+    <path d="M785 194 804 184 809 204 801 218 790 209Z"/>
+  </g>
+  <g stroke="#2855c5" stroke-width="1.25" opacity=".42">
+    <path d="M148 123 Q350 -10 553 140" stroke-dasharray="4 8"/>
+    <path d="M247 282 Q480 105 650 181" stroke-dasharray="4 8"/>
+    <path d="M553 140 Q710 177 760 307" stroke-dasharray="4 8"/>
+  </g>
+  <g fill="#2855c5">
+    <circle cx="148" cy="123" r="5"/><circle cx="553" cy="140" r="5"/>
+    <circle cx="247" cy="282" r="5"/><circle cx="650" cy="181" r="5"/>
+    <circle cx="760" cy="307" r="5"/>
+  </g>
+  <g stroke="#2855c5" stroke-width="1.4" opacity=".45">
+    <circle cx="553" cy="140" r="15"/><circle cx="650" cy="181" r="12"/>
+    <circle cx="148" cy="123" r="12"/>
+  </g>
+</svg>

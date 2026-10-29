@@ -5,10 +5,11 @@ import { validateIpQuery } from '../utils/validation';
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
+  onUseMyIp: () => void;
   isLoading?: boolean;
 }
 
-function SearchBar({ onSearch, isLoading = false }: SearchBarProps) {
+function SearchBar({ onSearch, onUseMyIp, isLoading = false }: SearchBarProps) {
   // Store search input and validation errors
   const [query, setQuery] = useState('8.8.8.8');
   const [error, setError] = useState('');
@@ -31,6 +32,11 @@ function SearchBar({ onSearch, isLoading = false }: SearchBarProps) {
   function selectExample(value: string) {
     setQuery(value);
     setError('');
+  }
+
+  function handleUseMyIp() {
+    setError('');
+    onUseMyIp();
   }
 
   return (
@@ -86,6 +92,14 @@ function SearchBar({ onSearch, isLoading = false }: SearchBarProps) {
         </button>
         <button type="button" onClick={() => selectExample('google.com')} disabled={isLoading}>
           google.com
+        </button>
+        <button
+          type="button"
+          className="use-my-ip-button"
+          onClick={handleUseMyIp}
+          disabled={isLoading}
+        >
+          Use My IP
         </button>
       </div>
     </div>

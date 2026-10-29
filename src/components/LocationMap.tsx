@@ -1,7 +1,14 @@
 
 import { useEffect } from 'react';
 import { Icon } from 'leaflet';
-import { CircleMarker, MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
+import {
+  CircleMarker,
+  MapContainer,
+  Marker,
+  Popup,
+  TileLayer,
+  useMap
+} from 'react-leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -26,18 +33,26 @@ const locationIcon = new Icon({
 
 function MapView({ position }: { position: [number, number] }) {
   const map = useMap();
+  const latitude = position[0];
+  const longitude = position[1];
 
   // Recenter the map when a new IP is selected
   useEffect(() => {
-    map.setView(position, map.getZoom());
-  }, [map, position[0], position[1]]);
+    map.setView([latitude, longitude], map.getZoom());
+  }, [map, latitude, longitude]);
 
   return null;
 }
 
-function LocationMap({ latitude, longitude, city, region }: LocationMapProps) {
+function LocationMap({
+  latitude,
+  longitude,
+  city,
+  region
+}: LocationMapProps) {
   const position: [number, number] = [latitude, longitude];
-  const place = [city, region].filter(Boolean).join(', ') || 'Unknown location';
+  const place =
+    [city, region].filter(Boolean).join(', ') || 'Unknown location';
 
   return (
     <section className="location-map" aria-label="IP location map">
@@ -48,11 +63,13 @@ function LocationMap({ latitude, longitude, city, region }: LocationMapProps) {
         className="map-container"
       >
         <MapView position={position} />
+
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {/* Highlight the approximate location without implying accuracy */}
+
+        {/* Highlight the approximate location */}
         <CircleMarker
           center={position}
           radius={42}
@@ -65,6 +82,7 @@ function LocationMap({ latitude, longitude, city, region }: LocationMapProps) {
             interactive: false
           }}
         />
+
         <Marker position={position} icon={locationIcon}>
           <Popup>Approximate location: {place}</Popup>
         </Marker>

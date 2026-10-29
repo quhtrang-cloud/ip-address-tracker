@@ -1,32 +1,35 @@
 
 import process from 'node:process';
 import { isIP } from 'node:net';
+import { ipAddress } from '@vercel/functions';
 
 function isValidDomain(value: string): boolean {
   if (value.length > 253 || !value.includes('.')) return false;
 
   const labels = value.split('.');
-  const validLabel = /^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
+  const validLabel =
+    /^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
 
-  return labels.every((label) => validLabel.test(label)) &&
-    /^[a-zA-Z]{2,63}$/.test(labels[labels.length - 1]);
+  return (
+    labels.every((label) => validLabel.test(label)) &&
+    /^[a-zA-Z]{2,63}$/.test(labels[labels.length - 1])
+  );
 }
 
-// Extract a safe error code without logging credentials
 function getUpstreamErrorCode(value: unknown): string | null {
   if (typeof value !== 'object' || value === null) return null;
 
   const data = value as Record<string, unknown>;
   const code = data.code ?? data.errorCode;
 
-  return typeof code === 'string' && /^[A-Za-z0-9_-]{1,60}$/.test(code)
+  return typeof code === 'string' &&
+    /^[A-Za-z0-9_-]{1,60}$/.test(code)
     ? code
     : null;
 }
 
-// Validate requests before calling the external API
 export default {
-  async fetch(request: Request) {
+  async fetch(request: Request): Promise<Response> {
     if (request.method !== 'GET') {
       return Response.json(
         { error: 'Method not allowed.' },
@@ -35,7 +38,24 @@ export default {
     }
 
     const url = new URL(request.url);
-    const query = url.searchParams.get('query')?.trim() ?? '';
+    const useMyIp = url.searchParams.get('self') === '1';
+
+    // Read the visitor IP from Vercel's request headers
+    const query = useMyIp
+      ? ipAddress(request) ?? ''
+      : url.searchParams.get('query')?.trim() ?? '';
+
+    // Validate the detected IP before using it
+    if (useMyIp && !isIP(query)) {
+      return Response.json(
+        {
+          error:
+            'Unable to detect your public IP. Please try the deployed website.'
+        },
+        { status: 422 }
+      );
+    }
+
     const ipVersion = isIP(query);
 
     if (!query || (!ipVersion && !isValidDomain(query))) {
@@ -54,7 +74,10 @@ export default {
       );
     }
 
-    const endpoint = new URL('https://geo.ipify.org/api/v2/country,city');
+    const endpoint = new URL(
+      'https://geo.ipify.org/api/v2/country,city'
+    );
+
     endpoint.searchParams.set('apiKey', apiKey);
     endpoint.searchParams.set(
       ipVersion ? 'ipAddress' : 'domain',
@@ -73,10 +96,9 @@ export default {
           const errorData: unknown = await response.json();
           errorCode = getUpstreamErrorCode(errorData);
         } catch {
-          // The upstream error response may not contain JSON
+          // Upstream response may not be JSON
         }
 
-        // Log status and a safe error code, never the API key
         console.error('GeoIPify upstream error:', {
           status: response.status,
           code: errorCode ?? 'Not provided'
@@ -88,15 +110,17 @@ export default {
         );
       }
 
-      const data = await response.json();
+      const data: unknown = await response.json();
 
       return Response.json(data, {
-        headers: { 'Cache-Control': 'no-store' }
+        headers: {
+          'Cache-Control': 'no-store'
+        }
       });
     } catch (error) {
       console.error(
         'GeoIPify connection error:',
-        error instanceof Error ? error.name : 'Unknown error'
+        error instanceof Error ? error.name : 'Unknown'
       );
 
       return Response.json(
