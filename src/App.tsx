@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import Header from './components/Header';
+import AboutModal from './components/AboutModal';
 import SearchBar from './components/SearchBar';
 import IpSummary from './components/IpSummary';
 import LocationMap from './components/LocationMap';
@@ -22,7 +23,6 @@ interface RecentSearch {
 const STORAGE_KEY = 'iptracker-recent-searches';
 const MAX_RECENT_SEARCHES = 5;
 
-// Example data displayed before the first successful lookup
 const DEFAULT_LOCATION = {
   ip: '8.8.8.8',
   city: 'Mountain View',
@@ -36,7 +36,7 @@ const DEFAULT_LOCATION = {
   asn: 'AS15169'
 };
 
-// Restore and validate locally saved searches
+// Restore saved searches
 function loadRecentSearches(): RecentSearch[] {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -60,7 +60,6 @@ function loadRecentSearches(): RecentSearch[] {
   }
 }
 
-// Format a readable location label
 function formatLocation(
   city?: string,
   region?: string,
@@ -73,14 +72,13 @@ function App() {
   const [result, setResult] = useState<IpLookupResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [recentSearches, setRecentSearches] =
     useState<RecentSearch[]>(loadRecentSearches);
 
-  // Prevent overlapping requests before React updates state
   const requestInProgress = useRef(false);
 
-  // Persist recent searches in localStorage
+  // Persist recent searches
   useEffect(() => {
     try {
       localStorage.setItem(
@@ -88,15 +86,12 @@ function App() {
         JSON.stringify(recentSearches)
       );
     } catch {
-      // Local storage may be unavailable
+      // Storage may be unavailable
     }
   }, [recentSearches]);
 
-  // Save a successful lookup to recent history
-  function saveRecentSearch(
-    query: string,
-    data: IpLookupResult
-  ) {
+  // Save a successful lookup
+  function saveRecentSearch(query: string, data: IpLookupResult) {
     const newSearch: RecentSearch = {
       query,
       location: formatLocation(
@@ -118,7 +113,7 @@ function App() {
     );
   }
 
-  // Shared request handler for manual and automatic lookup
+  // Shared lookup handler
   async function performLookup(
     request: () => Promise<IpLookupResult>,
     getHistoryQuery: (data: IpLookupResult) => string
@@ -150,41 +145,27 @@ function App() {
     }
   }
 
-  // Search a manually entered IP address or domain
   function handleSearch(query: string) {
     const value = query.trim();
-
     if (!value) return;
 
-    return performLookup(
-      () => lookupIp(value),
-      () => value
-    );
+    return performLookup(() => lookupIp(value), () => value);
   }
 
-  // Search the current visitor's public IP
   function handleUseMyIp() {
-    return performLookup(
-      lookupMyIp,
-      (data) => data.ip
-    );
+    return performLookup(lookupMyIp, (data) => data.ip);
   }
 
   function handleClearHistory() {
     setRecentSearches([]);
   }
 
-  // Derive display values from the current result
   const location = result?.location;
-
   const city = location?.city ?? DEFAULT_LOCATION.city;
   const region = location?.region ?? DEFAULT_LOCATION.region;
-
   const latitude = location?.lat ?? DEFAULT_LOCATION.latitude;
   const longitude = location?.lng ?? DEFAULT_LOCATION.longitude;
-
-  const timezone =
-    location?.timezone ?? DEFAULT_LOCATION.timezone;
+  const timezone = location?.timezone ?? DEFAULT_LOCATION.timezone;
 
   const locationLabel = result
     ? formatLocation(
@@ -198,26 +179,23 @@ function App() {
       );
 
   const utcOffset =
-    location?.timezone &&
-    /^[+-]\d{2}:\d{2}$/.test(location.timezone)
+    location?.timezone && /^[+-]\d{2}:\d{2}$/.test(location.timezone)
       ? `UTC${location.timezone}`
       : result
         ? 'Not available'
         : DEFAULT_LOCATION.utcOffset;
 
-  const asn =
-    result
-      ? result.as?.asn != null
-        ? `AS${result.as.asn}`
-        : 'Not available'
-      : DEFAULT_LOCATION.asn;
+  const asn = result
+    ? result.as?.asn != null
+      ? `AS${result.as.asn}`
+      : 'Not available'
+    : DEFAULT_LOCATION.asn;
 
   return (
     <div className="app">
-      <Header />
+      <Header onAboutClick={() => setIsAboutOpen(true)} />
 
       <main className="main-content">
-        {/* Hero and search */}
         <section className="intro-grid">
           <div className="hero-copy">
             <span className="hero-label">
@@ -239,14 +217,12 @@ function App() {
           />
         </section>
 
-        {/* API feedback */}
         {error && (
           <p className="search-error" role="alert">
             {error}
           </p>
         )}
 
-        {/* IP information cards */}
         <IpSummary
           ip={result?.ip ?? DEFAULT_LOCATION.ip}
           location={locationLabel}
@@ -257,7 +233,6 @@ function App() {
           asn={asn}
         />
 
-        {/* Map and details */}
         <div className="results-grid">
           <LocationMap
             latitude={latitude}
@@ -285,7 +260,6 @@ function App() {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="site-footer">
         <div className="footer-inner">
           <div className="footer-top">
@@ -330,9 +304,7 @@ function App() {
           </div>
 
           <div className="footer-bottom">
-            <span>
-              © 2026 IPTracker
-            </span>
+            <span>© 2026 IPTracker</span>
 
             <span>
               IP geolocation is approximate, not a precise GPS location.
@@ -340,6 +312,10 @@ function App() {
           </div>
         </div>
       </footer>
+
+      {isAboutOpen && (
+        <AboutModal onClose={() => setIsAboutOpen(false)} />
+      )}
     </div>
   );
 }

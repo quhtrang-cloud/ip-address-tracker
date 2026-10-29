@@ -1,75 +1,178 @@
-# IP Address Tracker
 
-A responsive IP address tracker built with React, TypeScript, and Leaflet. It allows users to look up IP addresses and domains, explore approximate geolocation data on an interactive map, and view network information through a clean, accessible interface.
+# IPTracker
 
-**Live Demo:** [View IPTracker](https://ip-address-trac-lovat.vercel.app/)
+A responsive IP address and domain lookup application built with React and TypeScript. Explore approximate geolocation, network information, and interactive maps through a clean, accessible interface.
 
-## Tech Stack
-
-- React
-- TypeScript
-- Vite
-- React Leaflet & OpenStreetMap
-- CSS
-- GeoIPify API
-- Vercel Serverless Functions
+**[Live Demo](https://ip-address-trac-lovat.vercel.app/)** 
 
 ## Features
 
-- Search for IPv4, IPv6 addresses, and domains
-- Display geolocation, timezone, ISP, and ASN information
-- Interactive map with location markers and approximate location highlights
-- Responsive layout with light and dark modes
-- Recent search history stored in localStorage
-- Input validation and error handling
-- Copy IP address functionality
+- **IP & Domain Lookup** - Search IPv4, IPv6 addresses, and domains.
+- **Use My IP** - Detect and look up the visitor's public IP address.
+- **Interactive Map** - Visualise approximate locations with Leaflet and OpenStreetMap.
+- **Location & Network Details** - View IP address, city, region, country, timezone, ISP, and available ASN information.
+- **Recent Searches** - Store up to five searches locally, revisit previous results, and clear search history.
+- **Light & Dark Mode** - Switch themes with preferences saved in localStorage.
+- **About Dialog** - Learn about the application and its geolocation limitations.
+- **Responsive Design** - Optimised for desktop, tablet, and mobile screens.
+- **Accessibility** - Form validation, semantic HTML, accessible labels, keyboard navigation, and native dialog interactions.
+
+## Tech Stack
+
+| Category | Technologies |
+| --- | --- |
+| Frontend | React 19, TypeScript, Vite |
+| Styling | CSS |
+| Maps | React Leaflet, Leaflet, OpenStreetMap |
+| IP Geolocation | GeoIPify API |
+| Backend | Vercel Functions |
+| Deployment | Vercel |
+| Version Control | Git, GitHub |
+
+## How It Works
+
+1. The user enters an IP address or domain, or selects **Use My IP**.
+2. React sends a request to the `/api/lookup` endpoint.
+3. A Vercel Function validates the input and communicates with GeoIPify using a server-side API key.
+4. The response updates the information cards, interactive map, and location details.
+5. Successful lookups are saved to localStorage for quick access.
+
+### Architecture
+
+```text
+User
+  |
+  v
+React + TypeScript
+  |
+  v
+Vercel Function (/api/lookup)
+  |
+  v
+GeoIPify API
+  |
+  v
+IP Details + Interactive Leaflet Map
+```
+
+The GeoIPify API key is stored in server-side environment variables and is not exposed in client-side code.
 
 ## Getting Started
 
-1. Clone the repository:
+### Prerequisites
 
-   ```bash
-   git clone https://github.com/quhtrang-cloud/ip-address-tracker.git
-   cd ip-address-tracker
-   ```
+- Node.js compatible with Vite 8
+- npm
+- GeoIPify API key
+- Vercel CLI for local API development
 
-2. Install dependencies:
+### Installation
 
-   ```bash
-   npm install
-   ```
+Clone the repository:
 
-3. Create a `.env.local` file in the project root:
+```bash
+git clone https://github.com/quhtrang-cloud/ip-address-tracker.git
+cd ip-address-tracker
+```
 
-   ```env
-   GEOIPIFY_API_KEY=your_api_key_here
-   ```
+Install dependencies:
 
-4. Run the application with Vercel CLI:
+```bash
+npm install
+```
 
-   ```bash
-   npm install -g vercel
-   vercel login
-   vercel link
-   vercel dev
-   ```
+### Environment Variables
 
-The application is available at the local URL displayed in the terminal.
+Create a `.env.local` file in the project root:
 
-## API Configuration
+```env
+GEOIPIFY_API_KEY=your_geoipify_api_key
+```
 
-IP geolocation data is provided by [GeoIPify](https://geo.ipify.org/).
+Keep API keys private. Environment files containing credentials are excluded from version control.
 
-API requests are handled through a Vercel Serverless Function to keep the API key out of client-side code.
+For production, configure `GEOIPIFY_API_KEY` in the Vercel project settings.
 
-For deployment, configure `GEOIPIFY_API_KEY` in the Vercel project's environment variables.
+### Run Locally
 
-## Project Status
+To run the frontend and Vercel Functions together:
 
-The core IP lookup functionality is implemented. Further improvements to error handling, accessibility, and automated testing are planned.
+```bash
+npx vercel dev
+```
 
-## Credits
+Open the local URL shown in the terminal.
 
-Based on the [IP Address Tracker challenge](https://www.frontendmentor.io/challenges/ip-address-tracker-I8-0yYAH0) from Frontend Mentor.
+Alternatively, start the Vite frontend:
 
-Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright).
+```bash
+npm run dev
+```
+
+**Note:** Vite alone does not execute the Vercel Function at `/api/lookup`. API-powered searches require a functioning backend. The **Use My IP** feature should be verified on the deployed website because local request headers may not provide the visitor's public IP.
+
+## Available Scripts
+
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start the Vite development server |
+| `npm run build` | Type-check and build for production |
+| `npm run preview` | Preview the production frontend |
+| `npm run lint` | Run Oxlint |
+| `npm audit` | Check dependencies for known vulnerabilities |
+
+## Project Structure
+
+```text
+ip-address-tracker/
+├── api/
+│   └── lookup.ts
+├── public/
+│   ├── favicon.svg
+│   └── ip-network-map.svg
+├── src/
+│   ├── components/
+│   │   ├── AboutModal.tsx
+│   │   ├── Header.tsx
+│   │   ├── IpSummary.tsx
+│   │   ├── LocationDetails.tsx
+│   │   ├── LocationMap.tsx
+│   │   ├── RecentSearches.tsx
+│   │   └── SearchBar.tsx
+│   ├── services/
+│   │   └── ipApi.ts
+│   ├── types/
+│   │   └── ip.ts
+│   ├── utils/
+│   │   └── validation.ts
+│   ├── App.tsx
+│   ├── App.css
+│   ├── index.css
+│   └── main.tsx
+├── .gitignore
+├── index.html
+├── package.json
+├── package-lock.json
+├── tsconfig.api.json
+├── vite.config.ts
+└── README.md
+```
+
+## Privacy & Limitations
+
+- IP geolocation provides approximate locations, not precise GPS coordinates.
+- Location accuracy depends on the network and geolocation provider.
+- VPNs and proxies may affect the detected IP address and location.
+- Search history is stored locally in the browser using localStorage.
+- The server-side API key is not included in the frontend bundle.
+- Geolocation lookups are subject to API availability and usage limits.
+
+## Data Attribution
+
+- [GeoIPify](https://geo.ipify.org/) - IP geolocation and network information
+- [OpenStreetMap](https://www.openstreetmap.org/copyright) - Map data
+- [Leaflet](https://leafletjs.com/) - Interactive mapping library
+
+## Author
+
+Developed by [Quynh Trang Nguyen](https://github.com/quhtrang-cloud).
