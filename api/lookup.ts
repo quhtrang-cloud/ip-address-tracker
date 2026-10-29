@@ -1,3 +1,4 @@
+
 import process from 'node:process';
 import { isIP } from 'node:net';
 
@@ -9,6 +10,18 @@ function isValidDomain(value: string): boolean {
 
   return labels.every((label) => validLabel.test(label)) &&
     /^[a-zA-Z]{2,63}$/.test(labels[labels.length - 1]);
+}
+
+// Extract a safe error code without logging credentials
+function getUpstreamErrorCode(value: unknown): string | null {
+  if (typeof value !== 'object' || value === null) return null;
+
+  const data = value as Record<string, unknown>;
+  const code = data.code ?? data.errorCode;
+
+  return typeof code === 'string' && /^[A-Za-z0-9_-]{1,60}$/.test(code)
+    ? code
+    : null;
 }
 
 // Validate requests before calling the external API
@@ -43,7 +56,10 @@ export default {
 
     const endpoint = new URL('https://geo.ipify.org/api/v2/country,city');
     endpoint.searchParams.set('apiKey', apiKey);
-    endpoint.searchParams.set(ipVersion ? 'ipAddress' : 'domain', query);
+    endpoint.searchParams.set(
+      ipVersion ? 'ipAddress' : 'domain',
+      query
+    );
 
     try {
       const response = await fetch(endpoint, {
@@ -51,8 +67,20 @@ export default {
       });
 
       if (!response.ok) {
-        // Log only the upstream status, never the API key or request URL
-        console.error('GeoIPify request failed:', response.status);
+        let errorCode: string | null = null;
+
+        try {
+          const errorData: unknown = await response.json();
+          errorCode = getUpstreamErrorCode(errorData);
+        } catch {
+          // The upstream error response may not contain JSON
+        }
+
+        // Log status and a safe error code, never the API key
+        console.error('GeoIPify upstream error:', {
+          status: response.status,
+          code: errorCode ?? 'Not provided'
+        });
 
         return Response.json(
           { error: 'Unable to retrieve location data.' },
@@ -66,8 +94,10 @@ export default {
         headers: { 'Cache-Control': 'no-store' }
       });
     } catch (error) {
-      console.error('GeoIPify request failed before receiving a response:',
-        error instanceof Error ? error.name : 'Unknown error');
+      console.error(
+        'GeoIPify connection error:',
+        error instanceof Error ? error.name : 'Unknown error'
+      );
 
       return Response.json(
         { error: 'The lookup service is temporarily unavailable.' },
