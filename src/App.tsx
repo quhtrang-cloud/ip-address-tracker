@@ -36,7 +36,7 @@ const DEFAULT_LOCATION = {
   asn: 'AS15169'
 };
 
-// Restore saved searches
+// Restore saved searches from localStorage
 function loadRecentSearches(): RecentSearch[] {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -73,10 +73,19 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+
   const [recentSearches, setRecentSearches] =
     useState<RecentSearch[]>(loadRecentSearches);
 
-  const requestInProgress = useRef(false);
+  // Keep track of the latest lookup request
+  const activeRequest = useRef<AbortController | null>(null);
+
+  // Cancel an unfinished request when the component unmounts
+  useEffect(() => {
+    return () => {
+      activeRequest.current?.abort();
+    };
+  }, []);
 
   // Persist recent searches
   useEffect(() => {
@@ -113,35 +122,59 @@ function App() {
     );
   }
 
-  // Shared lookup handler
+  // Handle lookups and cancel outdated requests
   async function performLookup(
-    request: () => Promise<IpLookupResult>,
+    request: (signal: AbortSignal) => Promise<IpLookupResult>,
     getHistoryQuery: (data: IpLookupResult) => string
   ) {
-    if (requestInProgress.current) return;
+    // Cancel the previous lookup before starting a new one
+    activeRequest.current?.abort();
 
-    requestInProgress.current = true;
+    const controller = new AbortController();
+    activeRequest.current = controller;
+
     setIsLoading(true);
     setError('');
 
     try {
-      const data = await request();
+      const data = await request(controller.signal);
+
+      // Ignore responses from cancelled or outdated requests
+      if (
+        controller.signal.aborted ||
+        activeRequest.current !== controller
+      ) {
+        return;
+      }
 
       if (!data?.ip || !data.location) {
-        throw new Error('The lookup service returned incomplete data.');
+        throw new Error(
+          'The lookup service returned incomplete data.'
+        );
       }
 
       setResult(data);
       saveRecentSearch(getHistoryQuery(data), data);
     } catch (err) {
+      // An intentionally cancelled request is not an error
+      if (
+        controller.signal.aborted ||
+        activeRequest.current !== controller
+      ) {
+        return;
+      }
+
       setError(
         err instanceof Error
           ? err.message
           : 'Something went wrong. Please try again.'
       );
     } finally {
-      requestInProgress.current = false;
-      setIsLoading(false);
+      // Only the latest request can update loading state
+      if (activeRequest.current === controller) {
+        activeRequest.current = null;
+        setIsLoading(false);
+      }
     }
   }
 
@@ -149,23 +182,37 @@ function App() {
     const value = query.trim();
     if (!value) return;
 
-    return performLookup(() => lookupIp(value), () => value);
+    return performLookup(
+      (signal) => lookupIp(value, signal),
+      () => value
+    );
   }
 
   function handleUseMyIp() {
-    return performLookup(lookupMyIp, (data) => data.ip);
+    return performLookup(
+      (signal) => lookupMyIp(signal),
+      (data) => data.ip
+    );
   }
 
   function handleClearHistory() {
     setRecentSearches([]);
   }
 
+  // Prepare data for display
   const location = result?.location;
+
   const city = location?.city ?? DEFAULT_LOCATION.city;
   const region = location?.region ?? DEFAULT_LOCATION.region;
-  const latitude = location?.lat ?? DEFAULT_LOCATION.latitude;
-  const longitude = location?.lng ?? DEFAULT_LOCATION.longitude;
-  const timezone = location?.timezone ?? DEFAULT_LOCATION.timezone;
+
+  const latitude =
+    location?.lat ?? DEFAULT_LOCATION.latitude;
+
+  const longitude =
+    location?.lng ?? DEFAULT_LOCATION.longitude;
+
+  const timezone =
+    location?.timezone ?? DEFAULT_LOCATION.timezone;
 
   const locationLabel = result
     ? formatLocation(
@@ -179,7 +226,8 @@ function App() {
       );
 
   const utcOffset =
-    location?.timezone && /^[+-]\d{2}:\d{2}$/.test(location.timezone)
+    location?.timezone &&
+    /^[+-]\d{2}:\d{2}$/.test(location.timezone)
       ? `UTC${location.timezone}`
       : result
         ? 'Not available'
@@ -193,7 +241,9 @@ function App() {
 
   return (
     <div className="app">
-      <Header onAboutClick={() => setIsAboutOpen(true)} />
+      <Header
+        onAboutClick={() => setIsAboutOpen(true)}
+      />
 
       <main className="main-content">
         <section className="intro-grid">
@@ -226,7 +276,9 @@ function App() {
         <IpSummary
           ip={result?.ip ?? DEFAULT_LOCATION.ip}
           location={locationLabel}
-          country={location?.country ?? DEFAULT_LOCATION.country}
+          country={
+            location?.country ?? DEFAULT_LOCATION.country
+          }
           timezone={timezone}
           utcOffset={utcOffset}
           isp={result?.isp ?? DEFAULT_LOCATION.isp}
@@ -265,7 +317,8 @@ function App() {
           <div className="footer-top">
             <div>
               <p className="footer-brand">
-                IPTracker<span aria-hidden="true">.</span>
+                IPTracker
+                <span aria-hidden="true">.</span>
               </p>
 
               <p className="footer-tagline">
@@ -314,7 +367,9 @@ function App() {
       </footer>
 
       {isAboutOpen && (
-        <AboutModal onClose={() => setIsAboutOpen(false)} />
+        <AboutModal
+          onClose={() => setIsAboutOpen(false)}
+        />
       )}
     </div>
   );

@@ -9,14 +9,18 @@ interface SearchBarProps {
   isLoading?: boolean;
 }
 
-function SearchBar({ onSearch, onUseMyIp, isLoading = false }: SearchBarProps) {
-  // Store search input and validation errors
+function SearchBar({
+  onSearch,
+  onUseMyIp,
+  isLoading = false
+}: SearchBarProps) {
   const [query, setQuery] = useState('8.8.8.8');
   const [error, setError] = useState('');
 
-  // Validate the query before submitting
+  // Validate and submit a new lookup
   function handleSearch(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
+
     const value = query.trim();
     const validationError = validateIpQuery(value);
 
@@ -41,10 +45,15 @@ function SearchBar({ onSearch, onUseMyIp, isLoading = false }: SearchBarProps) {
 
   return (
     <div className="search-panel">
-      <form className="search-form" onSubmit={handleSearch} aria-busy={isLoading}>
+      <form
+        className="search-form"
+        onSubmit={handleSearch}
+        aria-busy={isLoading}
+      >
         <label htmlFor="ip-search" className="sr-only">
           IP address or domain
         </label>
+
         <span className="search-icon" aria-hidden="true">
           <svg
             width="18"
@@ -58,6 +67,7 @@ function SearchBar({ onSearch, onUseMyIp, isLoading = false }: SearchBarProps) {
             <path d="m20 20-4-4" />
           </svg>
         </span>
+
         <input
           id="ip-search"
           type="text"
@@ -69,39 +79,61 @@ function SearchBar({ onSearch, onUseMyIp, isLoading = false }: SearchBarProps) {
           placeholder="Enter an IP address or domain"
           aria-invalid={Boolean(error)}
           aria-describedby={error ? 'search-error' : undefined}
-          disabled={isLoading}
         />
-        <button type="submit" disabled={isLoading}>
-          {isLoading ? 'Searching...' : 'Search →'}
+
+        <button type="submit">
+          {isLoading ? 'Search again →' : 'Search →'}
         </button>
       </form>
 
       {error && (
-        <p id="search-error" className="search-error" role="alert">
+        <p
+          id="search-error"
+          className="search-error"
+          role="alert"
+        >
           {error}
         </p>
       )}
 
       <div className="search-examples">
         <span>Try an example:</span>
-        <button type="button" onClick={() => selectExample('8.8.8.8')} disabled={isLoading}>
+
+        <button
+          type="button"
+          onClick={() => selectExample('8.8.8.8')}
+        >
           8.8.8.8
         </button>
-        <button type="button" onClick={() => selectExample('1.1.1.1')} disabled={isLoading}>
+
+        <button
+          type="button"
+          onClick={() => selectExample('1.1.1.1')}
+        >
           1.1.1.1
         </button>
-        <button type="button" onClick={() => selectExample('google.com')} disabled={isLoading}>
+
+        <button
+          type="button"
+          onClick={() => selectExample('google.com')}
+        >
           google.com
         </button>
+
         <button
           type="button"
           className="use-my-ip-button"
           onClick={handleUseMyIp}
-          disabled={isLoading}
         >
           Use My IP
         </button>
       </div>
+
+      {isLoading && (
+        <p className="sr-only" role="status">
+          Looking up IP information. You can start another search.
+        </p>
+      )}
     </div>
   );
 }

@@ -1,4 +1,3 @@
-
 # IPTracker
 
 ![CI](https://github.com/quhtrang-cloud/ip-address-tracker/actions/workflows/ci.yml/badge.svg)
@@ -9,15 +8,17 @@ A responsive IP address and domain lookup application built with React and TypeS
 
 ## Features
 
-- **IP & Domain Lookup** - Search IPv4, IPv6 addresses, and domains.
-- **Use My IP** - Detect and look up the visitor's public IP address.
-- **Interactive Map** - Visualise approximate locations with Leaflet and OpenStreetMap.
-- **Location & Network Details** - View IP address, city, region, country, timezone, ISP, and available ASN information.
-- **Recent Searches** - Store up to five searches locally, revisit previous results, and clear search history.
-- **Light & Dark Mode** - Switch themes with preferences saved in localStorage.
-- **About Dialog** - Learn about the application and its geolocation limitations.
-- **Responsive Design** - Optimised for desktop, tablet, and mobile screens.
-- **Accessibility** - Form validation, semantic HTML, accessible labels, keyboard navigation, and native dialog interactions.
+- **IP & Domain Lookup** — Search IPv4, IPv6 addresses, and domains.
+- **Use My IP** — Detect and look up the visitor's public IP address.
+- **Interactive Map** — Visualise approximate locations using React Leaflet and OpenStreetMap.
+- **Location & Network Details** — View the IP address, city, region, country, timezone, ISP, and available ASN information.
+- **Recent Searches** — Store up to five searches locally, revisit previous results, and clear search history. History persists after a page reload.
+- **Light & Dark Mode** — Switch themes with preferences saved in localStorage.
+- **Request Cancellation** — Cancel an unfinished lookup when a new search starts, preventing outdated results from replacing newer ones.
+- **Error Handling** — Display feedback for invalid input, API failures, and network errors.
+- **About Dialog** — Explain the application and the limitations of IP geolocation.
+- **Responsive Design** — Support desktop, tablet, and mobile layouts.
+- **Accessibility** — Use semantic HTML, accessible labels, keyboard navigation, and native dialog interactions.
 
 ## Tech Stack
 
@@ -29,17 +30,19 @@ A responsive IP address and domain lookup application built with React and TypeS
 | IP Geolocation | GeoIPify API |
 | Backend | Vercel Functions |
 | Testing | Playwright, Chromium |
-| CI | GitHub Actions |
+| Code Quality | Oxlint, TypeScript |
+| Continuous Integration | GitHub Actions |
 | Deployment | Vercel |
 | Version Control | Git, GitHub |
 
 ## How It Works
 
 1. The user enters an IP address or domain, or selects **Use My IP**.
-2. React sends a request to the `/api/lookup` endpoint.
-3. A Vercel Function validates the input and communicates with GeoIPify using a server-side API key.
+2. The frontend sends a request to `/api/lookup`.
+3. A Vercel Function handles the lookup and communicates with GeoIPify using a server-side API key.
 4. The response updates the information cards, interactive map, and location details.
 5. Successful lookups are saved to localStorage for quick access.
+6. If another search begins before the previous one finishes, the frontend uses `AbortController` to cancel the outdated request.
 
 ### Architecture
 
@@ -59,13 +62,13 @@ GeoIPify API
 IP Details + Interactive Leaflet Map
 ```
 
-The GeoIPify API key is stored in server-side environment variables and is not exposed in client-side code.
+The GeoIPify API key is stored in server-side environment variables and is not included in the client-side bundle.
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js compatible with Vite 8
+- Node.js version compatible with Vite 8
 - npm
 - GeoIPify API key
 - Vercel CLI for local API development
@@ -93,9 +96,7 @@ Create a `.env.local` file in the project root:
 GEOIPIFY_API_KEY=your_geoipify_api_key
 ```
 
-Keep API keys private. Environment files containing credentials are excluded from version control.
-
-For production, configure `GEOIPIFY_API_KEY` in the Vercel project settings.
+Keep API keys private. Files containing local credentials are excluded from version control. For production, configure `GEOIPIFY_API_KEY` in the Vercel project settings.
 
 ### Run Locally
 
@@ -107,83 +108,95 @@ npx vercel dev
 
 Open the local URL shown in the terminal.
 
-Alternatively, start the Vite frontend:
+To run only the Vite frontend:
 
 ```bash
 npm run dev
 ```
 
-**Note:** Vite alone does not execute the Vercel Function at `/api/lookup`. API-powered searches require a functioning backend. The **Use My IP** feature should be verified on the deployed website because local request headers may not provide the visitor's public IP.
+**Note:** Vite alone does not execute the Vercel Function at `/api/lookup`. Live searches need the backend. The **Use My IP** feature is best verified on the deployed website because local request headers may not identify the visitor's public IP.
 
 ## Testing
 
-Automated end-to-end tests are implemented using **Playwright** with Chromium.
+The project uses **Playwright** to test user-facing behaviour in Chromium. The current suite includes **12 automated end-to-end scenarios**.
 
-The test suite covers eight scenarios:
-
-| Test | Description |
+| Test | What it verifies |
 | --- | --- |
-| Homepage UI | Verifies the main interface and search components |
-| Input Validation | Checks error feedback for invalid IP input |
-| IP Lookup | Uses a mocked API response to verify result rendering |
-| Theme Persistence | Verifies that the selected theme persists after reloading |
-| About Dialog | Tests opening and closing the dialog with Escape |
-| Recent Searches | Verifies that search history can be saved and cleared |
-| API Error Handling | Checks error feedback and retry availability when the API fails |
-| Use My IP | Tests public IP lookup behaviour using a mocked response |
+| Homepage UI | Main interface and search components render correctly |
+| Input Validation | Invalid IP input produces an error message |
+| IP Lookup | A mocked lookup response updates displayed information |
+| Domain Lookup | Domain search displays information from a mocked API response |
+| Use My IP | Public IP lookup displays the mocked result |
+| Theme Persistence | The selected theme remains after a page reload |
+| About Dialog | The dialog opens and closes using Escape |
+| Recent Searches | Search history can be saved and cleared |
+| History Persistence | Recent searches remain after a page reload |
+| API Error Handling | HTTP API failures show an error and allow another attempt |
+| Network Failure | A failed network request shows an error and leaves the interface usable |
+| Request Cancellation | A newer search takes priority over an unfinished lookup |
 
-All eight tests passed locally on Chromium during development.
+**Latest local result:** 12 passed, 0 failed, on Chromium.
+
+### Test Results
+
+![Playwright E2E Test Report](docs/images/playwright-report.png)
+
+*Playwright HTML report showing the 12 passing test scenarios. The image is included in the repository under `docs/images/`.*
 
 ### Run Tests
 
-Install the required browser:
+Install the browser:
 
 ```bash
 npx playwright install chromium
 ```
 
-Run the complete test suite:
+Run the full suite:
 
 ```bash
 npx playwright test
 ```
 
-Run tests in interactive UI mode:
+Open Playwright UI mode:
 
 ```bash
 npx playwright test --ui
 ```
 
-View the HTML test report:
+View the HTML report:
 
 ```bash
 npx playwright show-report
 ```
 
-Playwright automatically starts the configured Vite development server.
+Repeat each test three times to help identify unstable tests:
 
-API responses are mocked in relevant tests to ensure consistent results without consuming GeoIPify API quota. These tests validate frontend behaviour and do not replace live backend integration testing.
+```bash
+npx playwright test --repeat-each=3
+```
+
+Playwright starts the configured Vite development server automatically. Tests involving API results use mocked responses so they are repeatable and do not consume GeoIPify quota. Mocked tests do **not** verify the live GeoIPify service or production backend end-to-end.
 
 ## Continuous Integration
 
-GitHub Actions automatically runs the CI workflow when code is pushed to `main` or a pull request targets `main`.
+GitHub Actions runs the CI workflow on pushes to `main` and pull requests targeting `main`.
 
-The workflow performs:
+The workflow:
 
-1. **Dependency Installation** - Installs packages using `npm ci`.
-2. **Code Quality Checks** - Runs Oxlint.
-3. **Production Build** - Verifies that the application builds successfully.
-4. **Browser Setup** - Installs Chromium and its dependencies.
-5. **E2E Testing** - Executes the Playwright test suite.
-6. **Test Reporting** - Uploads the Playwright HTML report as a workflow artifact.
+1. Installs dependencies with `npm ci`.
+2. Runs code quality checks with Oxlint.
+3. Type-checks and builds the production application.
+4. Installs Chromium and required system dependencies.
+5. Runs the Playwright test suite.
+6. Uploads the Playwright HTML report as a workflow artifact.
 
-The workflow configuration is available in `.github/workflows/ci.yml`.
+The configuration is in `.github/workflows/ci.yml`.
 
 **[View CI Workflow](https://github.com/quhtrang-cloud/ip-address-tracker/actions)**
 
-Vercel handles deployment separately. A successful CI run does not currently guarantee that deployment is blocked when tests fail.
+Vercel manages deployment separately. A successful CI setup does not, by itself, prevent Vercel from deploying a commit if tests fail.
 
-## Available Scripts
+## Available Commands
 
 | Command | Description |
 | --- | --- |
@@ -192,8 +205,9 @@ Vercel handles deployment separately. A successful CI run does not currently gua
 | `npm run preview` | Preview the production frontend |
 | `npm run lint` | Run Oxlint |
 | `npx playwright test` | Run automated E2E tests |
-| `npx playwright test --ui` | Open Playwright interactive test runner |
-| `npx playwright show-report` | Open the latest HTML test report |
+| `npx playwright test --ui` | Open the interactive Playwright test runner |
+| `npx playwright test --repeat-each=3` | Repeat each test three times |
+| `npx playwright show-report` | Open the latest Playwright HTML report |
 | `npm audit` | Check dependencies for known vulnerabilities |
 
 ## Project Structure
@@ -205,6 +219,9 @@ ip-address-tracker/
 │       └── ci.yml
 ├── api/
 │   └── lookup.ts
+├── docs/
+│   └── images/
+│       └── playwright-report.png
 ├── public/
 │   ├── favicon.svg
 │   └── ip-network-map.svg
@@ -229,11 +246,15 @@ ip-address-tracker/
 │   └── main.tsx
 ├── tests/
 │   ├── api-error.spec.ts
+│   ├── domain-lookup.spec.ts
+│   ├── history-persistence.spec.ts
 │   ├── homepage.spec.ts
 │   ├── interactions.spec.ts
 │   ├── lookup.spec.ts
 │   ├── my-ip.spec.ts
+│   ├── network-failure.spec.ts
 │   ├── recent-searches.spec.ts
+│   ├── request-cancellation.spec.ts
 │   └── validation.spec.ts
 ├── .gitignore
 ├── index.html
@@ -241,25 +262,30 @@ ip-address-tracker/
 ├── package-lock.json
 ├── playwright.config.ts
 ├── tsconfig.api.json
+├── tsconfig.app.json
+├── tsconfig.json
+├── tsconfig.node.json
 ├── vite.config.ts
 └── README.md
 ```
 
+Generated folders such as `dist/`, `playwright-report/`, and `test-results/` are excluded from version control.
+
 ## Privacy & Limitations
 
-- IP geolocation provides approximate locations, not precise GPS coordinates.
-- Location accuracy depends on the network and geolocation provider.
-- VPNs and proxies may affect the detected IP address and location.
-- Search history is stored locally in the browser using localStorage.
-- The server-side API key is not included in the frontend bundle.
-- Geolocation lookups are subject to API availability and usage limits.
-- Mocked API tests do not guarantee production API availability or geolocation accuracy.
+- IP geolocation estimates a network location; it does not provide precise GPS coordinates.
+- Accuracy varies by IP address, network, and geolocation provider.
+- VPNs and proxies may affect the detected IP and location.
+- Recent searches are stored locally in the browser using localStorage.
+- The GeoIPify API key is kept out of client-side source code.
+- Lookups depend on the external API's availability and usage limits.
+- Automated tests using mocked API responses do not guarantee production API availability or geolocation accuracy.
 
 ## Data Attribution
 
-- [GeoIPify](https://geo.ipify.org/) - IP geolocation and network information
-- [OpenStreetMap](https://www.openstreetmap.org/copyright) - Map data
-- [Leaflet](https://leafletjs.com/) - Interactive mapping library
+- [GeoIPify](https://geo.ipify.org/) — IP geolocation and network information
+- [OpenStreetMap](https://www.openstreetmap.org/copyright) — Map data
+- [Leaflet](https://leafletjs.com/) — Interactive mapping library
 
 ## Author
 
