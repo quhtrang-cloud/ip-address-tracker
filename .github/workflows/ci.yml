@@ -10,6 +10,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Get source code
@@ -30,13 +31,13 @@ jobs:
       - name: Build website
         run: npm run build
 
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox webkit
 
-      - name: Run Playwright tests
-        run: npx playwright test
+      - name: Run cross-browser E2E tests
+        run: npx playwright test --workers=1
 
-      - name: Save test report
+      - name: Save Playwright report
         if: always()
         uses: actions/upload-artifact@v4
         with:

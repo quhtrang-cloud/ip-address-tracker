@@ -8,17 +8,17 @@ A responsive IP address and domain lookup application built with React and TypeS
 
 ## Features
 
-- **IP & Domain Lookup** — Search IPv4, IPv6 addresses, and domains.
-- **Use My IP** — Detect and look up the visitor's public IP address.
-- **Interactive Map** — Visualise approximate locations using React Leaflet and OpenStreetMap.
-- **Location & Network Details** — View the IP address, city, region, country, timezone, ISP, and available ASN information.
-- **Recent Searches** — Store up to five searches locally, revisit previous results, and clear search history. History persists after a page reload.
-- **Light & Dark Mode** — Switch themes with preferences saved in localStorage.
-- **Request Cancellation** — Cancel an unfinished lookup when a new search starts, preventing outdated results from replacing newer ones.
-- **Error Handling** — Display feedback for invalid input, API failures, and network errors.
-- **About Dialog** — Explain the application and the limitations of IP geolocation.
-- **Responsive Design** — Support desktop, tablet, and mobile layouts.
-- **Accessibility** — Use semantic HTML, accessible labels, keyboard navigation, and native dialog interactions.
+- **IP & Domain Lookup** - Search IPv4, IPv6 addresses, and domains.
+- **Use My IP** - Detect and look up the visitor's public IP address.
+- **Interactive Map** - Visualise approximate locations with React Leaflet and OpenStreetMap.
+- **Location & Network Details** - View the IP address, city, region, country, timezone, ISP, and available ASN information.
+- **Recent Searches** - Store up to five searches locally, revisit previous results, and clear history. Searches persist after a page reload.
+- **Light & Dark Mode** - Switch themes, with preferences saved in localStorage.
+- **Request Cancellation** - Use `AbortController` to cancel outdated lookups when a new search begins.
+- **Error Handling** - Display feedback for invalid input, API failures, and network errors.
+- **About Dialog** - Explain the app and limitations of IP geolocation.
+- **Responsive Design** - Support desktop, tablet, and mobile layouts.
+- **Accessibility** - Use semantic HTML, accessible labels, keyboard navigation, and native dialog interactions.
 
 ## Tech Stack
 
@@ -29,7 +29,7 @@ A responsive IP address and domain lookup application built with React and TypeS
 | Maps | React Leaflet, Leaflet, OpenStreetMap |
 | IP Geolocation | GeoIPify API |
 | Backend | Vercel Functions |
-| Testing | Playwright, Chromium |
+| Testing | Playwright (Chromium, Firefox, WebKit) |
 | Code Quality | Oxlint, TypeScript |
 | Continuous Integration | GitHub Actions |
 | Deployment | Vercel |
@@ -68,7 +68,7 @@ The GeoIPify API key is stored in server-side environment variables and is not i
 
 ### Prerequisites
 
-- Node.js version compatible with Vite 8
+- A Node.js version compatible with Vite 8
 - npm
 - GeoIPify API key
 - Vercel CLI for local API development
@@ -100,7 +100,7 @@ Keep API keys private. Files containing local credentials are excluded from vers
 
 ### Run Locally
 
-To run the frontend and Vercel Functions together:
+Run the frontend and Vercel Functions together:
 
 ```bash
 npx vercel dev
@@ -114,11 +114,11 @@ To run only the Vite frontend:
 npm run dev
 ```
 
-**Note:** Vite alone does not execute the Vercel Function at `/api/lookup`. Live searches need the backend. The **Use My IP** feature is best verified on the deployed website because local request headers may not identify the visitor's public IP.
+**Note:** Vite alone does not execute the Vercel Function at `/api/lookup`; live searches need the backend. **Use My IP** is best verified on the deployed website because local request headers may not identify the visitor's public IP.
 
 ## Testing
 
-The project uses **Playwright** to test user-facing behaviour in Chromium. The current suite includes **12 automated end-to-end scenarios**.
+The project uses **Playwright** for automated end-to-end testing across **Chromium, Firefox, and WebKit**. The suite includes **12 distinct test scenarios**, executed once per browser engine for **36 total executions**.
 
 | Test | What it verifies |
 | --- | --- |
@@ -126,7 +126,7 @@ The project uses **Playwright** to test user-facing behaviour in Chromium. The c
 | Input Validation | Invalid IP input produces an error message |
 | IP Lookup | A mocked lookup response updates displayed information |
 | Domain Lookup | Domain search displays information from a mocked API response |
-| Use My IP | Public IP lookup displays the mocked result |
+| Use My IP | Public IP lookup displays a mocked result |
 | Theme Persistence | The selected theme remains after a page reload |
 | About Dialog | The dialog opens and closes using Escape |
 | Recent Searches | Search history can be saved and cleared |
@@ -135,47 +135,55 @@ The project uses **Playwright** to test user-facing behaviour in Chromium. The c
 | Network Failure | A failed network request shows an error and leaves the interface usable |
 | Request Cancellation | A newer search takes priority over an unfinished lookup |
 
-**Latest local result:** 12 passed, 0 failed, on Chromium.
+**Latest verified local result:** **36 passed, 0 failed** - 12 scenarios each on Chromium, Firefox, and WebKit (30 October 2026).
 
-### Test Results
+### Cross-Browser Test Results
 
-![Playwright E2E Test Report](docs/images/playwright-report.png)
+![Playwright cross-browser E2E test report](docs/images/playwright-report.png)
 
-*Playwright HTML report showing the 12 passing test scenarios. The image is included in the repository under `docs/images/`.*
+*Playwright HTML report showing 36 successful executions across three browser engines. The screenshot is stored at `docs/images/playwright-report.png`.*
 
 ### Run Tests
 
-Install the browser:
+Install the Playwright browsers:
 
 ```bash
-npx playwright install chromium
+npx playwright install chromium firefox webkit
 ```
 
-Run the full suite:
+Run the complete cross-browser suite:
 
 ```bash
 npx playwright test
 ```
 
-Open Playwright UI mode:
+Run an individual browser project:
+
+```bash
+npx playwright test --project=firefox
+```
+
+Open the interactive test runner:
 
 ```bash
 npx playwright test --ui
 ```
 
-View the HTML report:
+View the HTML test report:
 
 ```bash
 npx playwright show-report
 ```
 
-Repeat each test three times to help identify unstable tests:
+Repeat each scenario three times to help identify unstable tests:
 
 ```bash
 npx playwright test --repeat-each=3
 ```
 
-Playwright starts the configured Vite development server automatically. Tests involving API results use mocked responses so they are repeatable and do not consume GeoIPify quota. Mocked tests do **not** verify the live GeoIPify service or production backend end-to-end.
+Playwright automatically starts the configured Vite development server. Tests involving API results use mocked responses to make tests repeatable without consuming GeoIPify quota. **Mocked tests do not verify the live GeoIPify service or the production backend end-to-end.**
+
+The current Playwright configuration runs with **one worker** to keep cross-browser executions stable on the development machine.
 
 ## Continuous Integration
 
@@ -186,8 +194,8 @@ The workflow:
 1. Installs dependencies with `npm ci`.
 2. Runs code quality checks with Oxlint.
 3. Type-checks and builds the production application.
-4. Installs Chromium and required system dependencies.
-5. Runs the Playwright test suite.
+4. Installs Chromium, Firefox, WebKit, and their required system dependencies.
+5. Runs the Playwright suite across all three browser engines with one worker.
 6. Uploads the Playwright HTML report as a workflow artifact.
 
 The configuration is in `.github/workflows/ci.yml`.
@@ -204,7 +212,8 @@ Vercel manages deployment separately. A successful CI setup does not, by itself,
 | `npm run build` | Type-check and build for production |
 | `npm run preview` | Preview the production frontend |
 | `npm run lint` | Run Oxlint |
-| `npx playwright test` | Run automated E2E tests |
+| `npx playwright test` | Run cross-browser E2E tests |
+| `npx playwright test --project=firefox` | Run only the Firefox test project |
 | `npx playwright test --ui` | Open the interactive Playwright test runner |
 | `npx playwright test --repeat-each=3` | Repeat each test three times |
 | `npx playwright show-report` | Open the latest Playwright HTML report |
@@ -283,9 +292,9 @@ Generated folders such as `dist/`, `playwright-report/`, and `test-results/` are
 
 ## Data Attribution
 
-- [GeoIPify](https://geo.ipify.org/) — IP geolocation and network information
-- [OpenStreetMap](https://www.openstreetmap.org/copyright) — Map data
-- [Leaflet](https://leafletjs.com/) — Interactive mapping library
+- [GeoIPify](https://geo.ipify.org/) - IP geolocation and network information
+- [OpenStreetMap](https://www.openstreetmap.org/copyright) - Map data
+- [Leaflet](https://leafletjs.com/) - Interactive mapping library
 
 ## Author
 
